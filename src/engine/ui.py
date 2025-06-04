@@ -1,5 +1,6 @@
 import pygame
 import globals
+from util import window_to_game_coords
 
 class UiBase:
     def __init__(self, ui_id=None, anchor='topleft'):
@@ -209,23 +210,25 @@ class Button(Panel):
             self.lines = self._wrap_text(self.font, self.text, self.sizex - 10)
 
     def update(self, event=None):
-        if event is None:
-            return
-        if 'pos' not in event or 'type' not in event:
+        if event is None or not hasattr(event, 'pos') or not hasattr(event, 'type'):
             return
 
-        x, y = event['pos']
+        window_size = pygame.display.get_window_size()
+        mouse_pos = window_to_game_coords(event.pos, window_size)
+
         pos = self._get_position(self.sizex, self.sizey)
-        inside = pos[0] <= x <= pos[0] + self.sizex and pos[1] <= y <= pos[1] + self.sizey
+        rect = pygame.Rect(pos[0], pos[1], self.sizex, self.sizey)
+        inside = rect.collidepoint(mouse_pos)
 
-        if event['type'] == 'MOUSEMOTION':
+        if event.type == pygame.MOUSEMOTION:
             self.hovered = inside
-        elif event['type'] == 'MOUSEBUTTONDOWN' and inside:
+        elif event.type == pygame.MOUSEBUTTONDOWN and inside:
             self.pressed = True
-        elif event['type'] == 'MOUSEBUTTONUP':
+        elif event.type == pygame.MOUSEBUTTONUP:
             if self.pressed and inside and self.onclick:
                 self.onclick()
             self.pressed = False
+
 
     def render(self):
         pos = self._get_position(self.sizex, self.sizey)

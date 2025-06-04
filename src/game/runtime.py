@@ -23,16 +23,17 @@ def update_buttons(event=None):
         ui.update(event)
 
 def process_event(event):
+    game.towers.process_event(event)
     if event.type in (pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP):
-        event_dict = {'type': pygame.event.event_name(event.type), 'pos': event.pos}
-        update_buttons(event_dict)
-    else:
-        update_buttons()
+        update_buttons(event)
 
 def update():   
     globals.game_surface.fill((0,0,0))
     
     globals.current_map.update()
+
+    game.towers.update()
+    game.towers.draw(globals.game_surface)
 
     for ui in globals.UI:
         ui.render()
