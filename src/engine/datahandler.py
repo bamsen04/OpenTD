@@ -10,3 +10,10 @@ def setup_opentd():
         content = json.load(file)
 
     globals.json_assets["settings"] = content
+
+def colour_from_table(table):
+    return (
+        int(table["r"]),
+        int(table["g"]),
+        int(table["b"]),
+    )

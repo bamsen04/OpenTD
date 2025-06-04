@@ -10,3 +10,6 @@ VIEWABLE_ASPECT = VIEWABLE_WIDTH / VIEWABLE_HEIGHT
 json_assets = {}
 game_surface = None
 current_map = None
+
+# Window Data
+UI = []

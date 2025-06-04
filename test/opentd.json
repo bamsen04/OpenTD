@@ -1,4 +1,8 @@
 {
     "window_title": "Open TD - Test",
-    "version": "0.0.1"
+    "version": "0.0.1",
+
+    "ui": {
+        "tower_bar_colour": {"r": 255, "g": "255", "b": "255"}
+    }
 }
