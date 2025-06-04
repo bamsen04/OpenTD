@@ -1,0 +1,10 @@
+{
+    "tasks": [
+        {
+            "label": "Run Test",
+            "type": "shell",
+            "command": "python src/main.py test/",
+            "problemMatcher": []
+        }
+    ]
+}
