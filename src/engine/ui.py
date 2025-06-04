@@ -3,7 +3,6 @@ import globals
 
 class UiBase:
     def __init__(self, ui_id=None, anchor='topleft'):
-        # anchor can be 'topleft', 'topright', 'bottomleft', 'bottomright', 'center'
         self.ui_id = ui_id
         self.anchor = anchor
         if ui_id is not None:
@@ -20,7 +19,6 @@ class UiBase:
             globals.UI.remove(self)
 
     def _get_position(self, width, height):
-        # Returns actual (x,y) based on anchor and stored self.x, self.y
         if self.anchor == 'topleft':
             return self.x, self.y
         elif self.anchor == 'topright':
@@ -32,7 +30,7 @@ class UiBase:
         elif self.anchor == 'center':
             return self.x - width // 2, self.y - height // 2
         else:
-            return self.x, self.y  # fallback
+            return self.x, self.y
 
 class Panel(UiBase):
     def __init__(self, x, y, sizex, sizey, background_color, ui_id=None, anchor='topleft'):
@@ -73,27 +71,85 @@ class Text(UiBase):
         self.font_scale_auto = font_scale_auto
         self.text_align = text_align
         self.text_colour = text_colour
-        self.font = pygame.font.SysFont(None, self.font_size)
+        self.font = pygame.font.Font("font", self.font_size)
+        self.lines = []
+
+    def _wrap_text(self, font, text, max_width):
+        words = text.split(' ')
+        lines = []
+        current_line = ''
+        for word in words:
+            test_line = current_line + ('' if current_line == '' else ' ') + word
+            if font.size(test_line)[0] <= max_width:
+                current_line = test_line
+            else:
+                if current_line != '':
+                    lines.append(current_line)
+                current_line = word
+        if current_line:
+            lines.append(current_line)
+        return lines
+
+    def _auto_scale_font(self):
+        font_size = 4
+        max_font_size = self.font_size
+        best_font = None
+        best_lines = None
+
+        while font_size <= max_font_size:
+            font = pygame.font.Font("font", font_size)
+            lines = self._wrap_text(font, self.text, self.sizex)
+            line_height = font.get_linesize()
+            max_line_width = max(font.size(line)[0] for line in lines) if lines else 0
+            total_height = line_height * len(lines)
+
+            if total_height > self.sizey or max_line_width > self.sizex:
+                break
+
+            best_font = font
+            best_lines = lines
+            font_size += 1
+
+        if best_font is not None:
+            self.font = best_font
+            self.lines = best_lines
+        else:
+            self.font = pygame.font.Font("font", 4)
+            self.lines = self._wrap_text(self.font, self.text, self.sizex)
 
     def update(self, event=None):
         pass
 
     def render(self):
         pos = self._get_position(self.sizex, self.sizey)
-        rendered_text = self.font.render(self.text, True, self.text_colour)
-        text_rect = rendered_text.get_rect()
-
-        # Position text_rect relative to pos and text_align inside box (sizex, sizey)
-        if self.text_align == 'center':
-            text_rect.center = (pos[0] + self.sizex // 2, pos[1] + self.sizey // 2)
-        elif self.text_align == 'left':
-            text_rect.midleft = (pos[0] + 5, pos[1] + self.sizey // 2)
-        elif self.text_align == 'right':
-            text_rect.midright = (pos[0] + self.sizex - 5, pos[1] + self.sizey // 2)
+        if self.font_scale_auto:
+            self._auto_scale_font()
         else:
-            text_rect.topleft = pos
+            self.lines = self._wrap_text(self.font, self.text, self.sizex)
 
-        globals.game_surface.blit(rendered_text, text_rect)
+        line_height = self.font.get_linesize()
+        total_text_height = line_height * len(self.lines)
+
+        y_start = pos[1]
+        if self.text_align == 'center':
+            y_start = pos[1] + (self.sizey - total_text_height) // 2
+
+        for i, line in enumerate(self.lines):
+            rendered_text = self.font.render(line, True, self.text_colour)
+            text_rect = rendered_text.get_rect()
+
+            if self.text_align == 'center':
+                text_rect.centerx = pos[0] + self.sizex // 2
+            elif self.text_align == 'left':
+                text_rect.x = pos[0] + 5
+            elif self.text_align == 'right':
+                text_rect.right = pos[0] + self.sizex - 5
+            else:
+                text_rect.x = pos[0]
+
+            text_rect.y = y_start + i * line_height
+
+            globals.game_surface.blit(rendered_text, text_rect)
 
 class Button(Panel):
     def __init__(self, x, y, sizex, sizey, text, font_size, font_scale_auto, text_align, text_colour, background_colour, onclick, ui_id=None, anchor='topleft'):
@@ -106,12 +162,55 @@ class Button(Panel):
         self.onclick = onclick
         self.hovered = False
         self.pressed = False
-        self.font = pygame.font.SysFont(None, self.font_size)
+        self.font = pygame.font.Font("font", self.font_size)
+        self.lines = []
+
+    def _wrap_text(self, font, text, max_width):
+        words = text.split(' ')
+        lines = []
+        current_line = ''
+        for word in words:
+            test_line = current_line + ('' if current_line == '' else ' ') + word
+            if font.size(test_line)[0] <= max_width:
+                current_line = test_line
+            else:
+                if current_line != '':
+                    lines.append(current_line)
+                current_line = word
+        if current_line:
+            lines.append(current_line)
+        return lines
+
+    def _auto_scale_font(self):
+        font_size = 4
+        max_font_size = self.font_size
+        best_font = None
+        best_lines = None
+
+        while font_size <= max_font_size:
+            font = pygame.font.Font("font", font_size)
+            lines = self._wrap_text(font, self.text, self.sizex - 10)
+            line_height = font.get_linesize()
+            max_line_width = max(font.size(line)[0] for line in lines) if lines else 0
+            total_height = line_height * len(lines)
+
+            if total_height > self.sizey - 10 or max_line_width > self.sizex - 10:
+                break
+
+            best_font = font
+            best_lines = lines
+            font_size += 1
+
+        if best_font is not None:
+            self.font = best_font
+            self.lines = best_lines
+        else:
+            self.font = pygame.font.Font("font", 4)
+            self.lines = self._wrap_text(self.font, self.text, self.sizex - 10)
 
     def update(self, event=None):
         if event is None:
             return
-
         if 'pos' not in event or 'type' not in event:
             return
 
@@ -139,16 +238,29 @@ class Button(Panel):
 
         pygame.draw.rect(globals.game_surface, bg_color, (*pos, self.sizex, self.sizey))
 
-        rendered_text = self.font.render(self.text, True, self.text_colour)
-        text_rect = rendered_text.get_rect()
-
-        if self.text_align == 'center':
-            text_rect.center = (pos[0] + self.sizex // 2, pos[1] + self.sizey // 2)
-        elif self.text_align == 'left':
-            text_rect.midleft = (pos[0] + 5, pos[1] + self.sizey // 2)
-        elif self.text_align == 'right':
-            text_rect.midright = (pos[0] + self.sizex - 5, pos[1] + self.sizey // 2)
+        if self.font_scale_auto:
+            self._auto_scale_font()
         else:
-            text_rect.topleft = pos
+            self.lines = self._wrap_text(self.font, self.text, self.sizex - 10)
 
-        globals.game_surface.blit(rendered_text, text_rect)
+        line_height = self.font.get_linesize()
+        total_text_height = line_height * len(self.lines)
+
+        y_start = pos[1] + (self.sizey - total_text_height) // 2
+
+        for i, line in enumerate(self.lines):
+            rendered_text = self.font.render(line, True, self.text_colour)
+            text_rect = rendered_text.get_rect()
+
+            if self.text_align == 'center':
+                text_rect.centerx = pos[0] + self.sizex // 2
+            elif self.text_align == 'left':
+                text_rect.x = pos[0] + 5
+            elif self.text_align == 'right':
+                text_rect.right = pos[0] + self.sizex - 5
+            else:
+                text_rect.x = pos[0] + 5
+
+            text_rect.y = y_start + i * line_height
+
+            globals.game_surface.blit(rendered_text, text_rect)

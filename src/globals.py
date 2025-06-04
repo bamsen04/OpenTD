@@ -11,5 +11,7 @@ json_assets = {}
 game_surface = None
 current_map = None
 
+towers = []
+
 # Window Data
 UI = []
