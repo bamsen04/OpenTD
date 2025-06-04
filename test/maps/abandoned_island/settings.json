@@ -1,0 +1,7 @@
+{
+    "name": "The Abandoned Island",
+    "image_data": {
+        "colour": "colour.jpg",
+        "placeable": "placeable.alpha"
+    }
+}

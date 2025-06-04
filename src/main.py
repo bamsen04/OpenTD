@@ -31,6 +31,8 @@ globals.game_surface = pygame.Surface((globals.VIEWABLE_WIDTH, globals.VIEWABLE_
 background_art = pygame.image.load("image/background.jpg").convert()
 clock = pygame.time.Clock()
 
+# Initialize game
+game.runtime.init()
 
 while True:
     for event in pygame.event.get():
